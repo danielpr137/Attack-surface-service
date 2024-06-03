@@ -1,20 +1,21 @@
-import logging
-from logging.handlers import RotatingFileHandler
-import os
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+db = SQLAlchemy(app)
 
-# Configure logging
-log_file = os.path.join(app.root_path, 'app.log')
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+from app import models, routes
 
-file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
-file_handler.setFormatter(log_formatter)
-file_handler.setLevel(logging.INFO)
+# Load the cloud environment data
+import sys
+from app.cloud_env import load_cloud_env
 
-app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
-
-# Import routes and other components after initializing the app
-from app import routes
+if len(sys.argv) > 1:
+    input_file = sys.argv[1]
+    with app.app_context():
+        load_cloud_env(f'inputs/{input_file}')
+else:
+    print("Please provide the input file as an argument.")
+    print("Example: python app.py input-2.json")
+    sys.exit(1)
