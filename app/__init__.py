@@ -1,20 +1,38 @@
-import logging
-from logging.handlers import RotatingFileHandler
-import os
 from flask import Flask
+import os
+import json
+import logging
+from dotenv import load_dotenv
+from app.db import db
 
-app = Flask(__name__)
+def create_app():
+    load_dotenv()
+    app = Flask(__name__)
 
-# Configure logging
-log_file = os.path.join(app.root_path, 'app.log')
-log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
-file_handler.setFormatter(log_formatter)
-file_handler.setLevel(logging.INFO)
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
+    db.init_app(app)
 
-# Import routes and other components after initializing the app
-from app import routes
+    input_file = os.getenv('CLOUD_ENV_FILE')
+    if not input_file:
+        logger.error("CLOUD_ENV_FILE environment variable not set")
+        raise RuntimeError("CLOUD_ENV_FILE environment variable not set")
+
+    try:
+        with open(input_file) as f:
+            cloud_env = json.load(f)
+            app.config['cloud_env'] = cloud_env
+            app.config['vm_count'] = len(cloud_env['vms'])
+            logger.info(f"Loaded cloud environment from {input_file}")
+    except Exception as e:
+        logger.error(f"Failed to load the cloud environment file: {e}")
+        raise RuntimeError(f"Failed to load the cloud environment file: {e}")
+
+    from app.routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api/v1')
+
+    return app
