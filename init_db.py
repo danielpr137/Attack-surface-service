@@ -6,8 +6,8 @@ import json
 def initialize_database():
     app = create_app()
     with app.app_context():
-        db.drop_all()  # Drop all tables to start fresh
-        db.create_all()  # Create tables
+        db.drop_all()
+        db.create_all()
 
         input_file = os.getenv('CLOUD_ENV_FILE')
         with open(input_file) as f:

@@ -1,4 +1,4 @@
-from app.db import db  # Import the db instance
+from app.db import db
 
 class VM(db.Model):
     __tablename__ = 'vms'

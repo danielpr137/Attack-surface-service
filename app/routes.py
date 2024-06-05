@@ -6,10 +6,8 @@ import logging
 
 api_bp = Blueprint('api', __name__)
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
-# Global variables to track statistics
 request_count = 0
 total_request_time = 0
 
@@ -56,7 +54,6 @@ def stats():
         "average_request_time": average_request_time
     })
 
-# Error handling
 @api_bp.errorhandler(404)
 def not_found(error):
     logger.error("404 Not Found")

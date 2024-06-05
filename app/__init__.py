@@ -3,13 +3,12 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
-from app.db import db  # Import the db instance
+from app.db import db
 
 def create_app():
     load_dotenv()
     app = Flask(__name__)
 
-    # Set up logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
