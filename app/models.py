@@ -1,21 +1,15 @@
-from app import db
+from app.db import db  # Import the db instance
 
-class VirtualMachine(db.Model):
-    __tablename__ = 'virtual_machines'
-
-    vm_id = db.Column(db.String, primary_key=True)
-    name = db.Column(db.String)
-    tags = db.Column(db.JSON)
-
-    def __repr__(self):
-        return f'<VirtualMachine {self.vm_id}>'
+class VM(db.Model):
+    __tablename__ = 'vms'
+    id = db.Column(db.Integer, primary_key=True)
+    vm_id = db.Column(db.String, unique=True, nullable=False)
+    name = db.Column(db.String, nullable=False)
+    tags = db.Column(db.String, nullable=True)
 
 class FirewallRule(db.Model):
     __tablename__ = 'firewall_rules'
-
-    fw_id = db.Column(db.String, primary_key=True)
-    source_tag = db.Column(db.String)
-    dest_tag = db.Column(db.String)
-
-    def __repr__(self):
-        return f'<FirewallRule {self.fw_id}>'
+    id = db.Column(db.Integer, primary_key=True)
+    fw_id = db.Column(db.String, unique=True, nullable=False)
+    source_tag = db.Column(db.String, nullable=False)
+    dest_tag = db.Column(db.String, nullable=False)

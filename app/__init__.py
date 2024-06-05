@@ -1,21 +1,39 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+import os
+import json
+import logging
+from dotenv import load_dotenv
+from app.db import db  # Import the db instance
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-db = SQLAlchemy(app)
+def create_app():
+    load_dotenv()
+    app = Flask(__name__)
 
-from app import models, routes
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
-# Load the cloud environment data
-import sys
-from app.cloud_env import load_cloud_env
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-if len(sys.argv) > 1:
-    input_file = sys.argv[1]
-    with app.app_context():
-        load_cloud_env(f'inputs/{input_file}')
-else:
-    print("Please provide the input file as an argument.")
-    print("Example: python app.py input-2.json")
-    sys.exit(1)
+    db.init_app(app)
+
+    input_file = os.getenv('CLOUD_ENV_FILE')
+    if not input_file:
+        logger.error("CLOUD_ENV_FILE environment variable not set")
+        raise RuntimeError("CLOUD_ENV_FILE environment variable not set")
+
+    try:
+        with open(input_file) as f:
+            cloud_env = json.load(f)
+            app.config['cloud_env'] = cloud_env
+            app.config['vm_count'] = len(cloud_env['vms'])
+            logger.info(f"Loaded cloud environment from {input_file}")
+    except Exception as e:
+        logger.error(f"Failed to load the cloud environment file: {e}")
+        raise RuntimeError(f"Failed to load the cloud environment file: {e}")
+
+    from app.routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api/v1')
+
+    return app
